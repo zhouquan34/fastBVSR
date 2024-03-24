@@ -1,0 +1,48 @@
+#! /bin/bash
+
+cd src
+
+rm *.o
+
+a_libs=(libgsl.a libgslcblas.a)
+
+CC=g++
+
+CFLAGS="-c -O3"
+
+LOCAL="/Users/quanzhou/local";
+
+INC="$LOCAL/include"
+
+LIB="$LOCAL/lib"
+
+LIBFLAGS="-lm"
+
+STATIC=""
+for a in ${a_libs[@]}
+	do
+	STATIC=$STATIC" $LIB/$a"
+done
+
+BVSR="mcmc.o model2c.o model.o ridge.o chol.o xy.o lalg.o icf.o args.o output.o readin.o ftime.o generic.o global.o"
+
+$CC $CFLAGS global.cpp -I $INC
+$CC $CFLAGS generic.cpp -I $INC
+$CC $CFLAGS ftime.cpp -I $INC
+$CC $CFLAGS lalg.cpp -I $INC
+$CC $CFLAGS readin.cpp -I $INC
+$CC $CFLAGS args.cpp -I $INC
+$CC $CFLAGS output.cpp -I $INC
+$CC $CFLAGS xy.cpp -I $INC
+$CC $CFLAGS icf.cpp -I $INC
+$CC $CFLAGS chol.cpp -I $INC
+$CC $CFLAGS ridge.cpp -I $INC
+$CC $CFLAGS model.cpp -I $INC
+$CC $CFLAGS model2c.cpp -I $INC
+$CC $CFLAGS mcmc.cpp -I $INC
+$CC $CFLAGS bvsr.cpp -I $INC
+
+$CC -o ../fastBVSR-mac bvsr.o $BVSR $STATIC $LIBFLAGS
+
+
+

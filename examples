@@ -1,0 +1,19 @@
+#! /bin/sh
+
+### you can use either mean genotype format (-g) or PLINK A-transpose format (-a) as the input ################
+### the two commands produce the same results since they use the same random seed 34 ##########################
+./fastBVSR -g test_data/test.mg.txt -p test_data/test.ph -w 1000 -s 10000 -o test_out/try1 -r 34
+./fastBVSR -a test_data/test.plink -p test_data/test.ph -w 1000 -s 10000 -o test_out/try2 -r 34
+./fastBVSR -m test_data/test.mat -p test_data/test.ph -w 1000 -s 10000 -o test_out/trym -r 34
+################################################################################################
+
+
+### Draw trace plots to check the convergence ###
+Rscript fastBVSR-trace.R test_out/try1
+######################################
+
+### continue the last fastBVSR run ###
+./fastBVSR -b test_out/try2 -o test_out/try3 -s 10000
+Rscript fastBVSR-post.R 1000 test_out/try2.path.txt test_out/try3.path.txt >test_out/try2_try3.post.txt
+#######################################
+

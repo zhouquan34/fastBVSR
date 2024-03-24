@@ -1,0 +1,8 @@
+"examples" gives some example commands for running fastBVSR in terminal. 
+
+If you have C++ GSL library installed, you can try compiling the code yourself. An example Makefile is provided. 
+
+Some may find it convenient to run the program in R. An example is given in the folder R-mac. It is only for Mac OS. Please contact me if you need a Linux version. 
+
+Thanks for your interest. My personal email: zhouquan.stat@gmail.com
+
