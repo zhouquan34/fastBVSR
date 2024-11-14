@@ -1,0 +1,22 @@
+Marginal PIP
+1 0.9483961 
+2 0.3831297 
+3 0.7101423 
+4 0.3405891 
+
+Model Posterior
+model = 1	posterior = 0.2126498
+model = 2	posterior = 0.002978231
+model = 1,2	posterior = 0.0215747
+model = 3	posterior = 0.03354206
+model = 1,3	posterior = 0.2404312
+model = 2,3	posterior = 0.004166137
+model = 1,2,3	posterior = 0.1440687
+model = 4	posterior = 0.00355052
+model = 1,4	posterior = 0.03248652
+model = 2,4	posterior = 0.0007115845
+model = 1,2,4	posterior = 0.01590627
+model = 3,4	posterior = 0.004314969
+model = 1,3,4	posterior = 0.0898951
+model = 2,3,4	posterior = 0.0023404
+model = 1,2,3,4	posterior = 0.1913837
