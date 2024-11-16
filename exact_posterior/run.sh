@@ -1,7 +1,7 @@
 #! /bin/sh
 
 Rscript exact_posterior.R >truth.txt
-../fastBVSR -g toy.txt -p toy.ph -w 10000 -s 100000 --h2-min 0.01 --h2-max 0.99 -o out
+../fastBVSR-mac -g toy.txt -p toy.ph -w 10000 -s 200000 --h2-min 0.01 --h2-max 0.99 -o out
 
 awk '{print $1"\t"$3}' out.beta.txt >mcmc.txt
 echo "" >>mcmc.txt
