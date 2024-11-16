@@ -51,7 +51,7 @@ int set_g_n_snp (int n){
 }
 
 int read_one_line (stringstream& ss, int c){
-	vector<double> snp;
+	vector<double> snp; // fixed the bug
 	int na = 0; double sum = 0.0;
 	string v;
 	while (ss >> v){

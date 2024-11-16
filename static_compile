@@ -10,7 +10,7 @@ CC=g++
 
 CFLAGS="-c -O3"
 
-LOCAL="/Users/quanzhou/local";
+LOCAL="/opt/homebrew";
 
 INC="$LOCAL/include"
 
@@ -24,11 +24,10 @@ for a in ${a_libs[@]}
 	STATIC=$STATIC" $LIB/$a"
 done
 
-BVSR="mcmc.o model2c.o model.o ridge.o chol.o xy.o lalg.o icf.o args.o output.o readin.o ftime.o generic.o global.o"
+BVSR="mcmc.o model.o ridge.o chol.o xy.o lalg.o icf.o args.o output.o readin.o generic.o global.o"
 
 $CC $CFLAGS global.cpp -I $INC
 $CC $CFLAGS generic.cpp -I $INC
-$CC $CFLAGS ftime.cpp -I $INC
 $CC $CFLAGS lalg.cpp -I $INC
 $CC $CFLAGS readin.cpp -I $INC
 $CC $CFLAGS args.cpp -I $INC
@@ -38,7 +37,6 @@ $CC $CFLAGS icf.cpp -I $INC
 $CC $CFLAGS chol.cpp -I $INC
 $CC $CFLAGS ridge.cpp -I $INC
 $CC $CFLAGS model.cpp -I $INC
-$CC $CFLAGS model2c.cpp -I $INC
 $CC $CFLAGS mcmc.cpp -I $INC
 $CC $CFLAGS bvsr.cpp -I $INC
 

@@ -9,13 +9,12 @@ void print_help(void){
 	cout << "Arguments:" << endl;
 	cout << "-g: mean genotype file (same format as piMASS input)" << endl;
 	cout << "-a: PLINK 1.9 A-transpose file" << endl;
-	cout << "-c: covariate file" << endl;
+	cout << "-m: design matrix file" << endl;
 	cout << "-p: phenotype file (same format as piMASS input)" << endl;
 	cout << "-o: output prefix" << endl;
 	cout << "-w: number of burn-in iterations" << endl;
 	cout << "-s: number of MCMC iterations of this run" << endl;
-	cout << "-R: do Rao-Blackwellization every R iterations" << endl;
-	cout << "-b: prefix of the MCMC to continue" << endl;
+	cout << "-R: do Rao-Blackwellization every R iterations" << endl; 
 	cout << "-r: random seed" << endl;
 	exit(EXIT_FAILURE);
 	return;
@@ -96,8 +95,8 @@ void init_paras(void){
 	g_paras["-z"] = PARA_SEED;
 	g_paras["-r"] = PARA_SEED;
 	g_paras["--seed"] = PARA_SEED;
-	g_paras["-h"] = PARA_HELP;
-	g_paras["--help"] = PARA_HELP;	
+	g_paras["-h"] = PARA_MAN;
+	g_paras["--help"] = PARA_MAN;	
 	g_paras["--long"] = PARA_LONG;
 	g_paras["--long-ex"] = PARA_LEX;
 	g_paras["--geom"] = PARA_GEOM;

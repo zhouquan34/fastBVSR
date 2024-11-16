@@ -184,9 +184,6 @@ void mcmc_init(model*& model){
 	if (g_min_model_size < 0){g_min_model_size = 0;}
 	if (g_pseudo_n == 0) {g_pseudo_n = g_n_snp;}
 	if (g_exact_bf == 1) {g_icf_min_p = g_n_snp + 1;}
-	if ((g_upper_add - g_lower_add < 1e-3) && (g_upper_del - g_lower_del < 1e-3)){
-		g_rb_thin = g_mcmc_iter + g_mcmc_warm + g_last_iter + 100;
-	}
 	g_log_max_h = log(g_max_h);
 	g_log_min_h = log(g_min_h);
 
@@ -239,21 +236,20 @@ void mcmc (void){
 	int print_unit = calc_refresh();
 	g_mcmc_stay = 0;
 	cerr << "MCMC sampling" << endl;
-	PATH << "No.\tLife\tModelSize\th2\tPVE\tpi\tsigma\tBayesianR2\tPVE-rb" << endl;
+	PATH << "No.\tLife\tModelSize\th2\tPVE\tpi\tsigma\tBayesianR2" << endl;
 	MOD << "#Iteration index matched with the PATH file" << endl;
 //	if (g_output_yhat == 1){YHAT << "#Iteration index matched with the PATH file" << endl;}
 	int start_iter = 0, total_iter = 0;
 	calc_start_end(start_iter, total_iter);
-	if (g_rb_thin < total_iter/10){my_model->rao_blackwell();}
 	for (g_mcmc_i = start_iter; g_mcmc_i <= total_iter; g_mcmc_i ++){
-		if (g_mcmc_i % print_unit == 0){cerr << '='; fflush(stdout); }	
+		if (g_mcmc_i % print_unit == 0){cerr << '='; fflush(stdout); }
+		
 	//	cerr << "iter-start " << g_mcmc_i << endl;
 		mcmc_sample(my_model);
 	//	cerr << "iter-end " << g_mcmc_i << endl;	
 		if (g_mcmc_i > g_mcmc_warm){
 			if (g_mcmc_i % g_rb_thin == 0){ my_model->rao_blackwell();}
 		}
-	//	cerr << "iter-end2 " << g_mcmc_i << endl;	
 	}
 	string paras = my_model->para_str();
 	string model = my_model->model_str();

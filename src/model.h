@@ -10,11 +10,6 @@
 #include "lalg.h"
 
 extern std::vector<double> g_log_score;
-extern int g_upper_add;
-extern int g_lower_add;
-extern int g_upper_del;
-extern int g_lower_del;
-
 
 class model{
 	private:
@@ -23,7 +18,6 @@ class model{
 		double sse;
 		double h2; 
 		double pve;
-		double pve_rb;
 		double br2; 
 		double tau;
 		double like;

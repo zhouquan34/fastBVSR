@@ -8,16 +8,6 @@ int g_lower_add = 0;
 int g_upper_del = 1;
 int g_lower_del = 0;
 
-void gsl_matrix_print (const gsl_matrix* m){
-	for (int i=0; i<m->size1; i++){
-		for (int j=0; j<m->size2; j++){
-			cout << gsl_matrix_get(m, i, j) << "\t";	
-		}	
-		cout << endl;
-	}	
-	return;
-}
-
 
 // int g_fix_sigma = 1;
 
@@ -27,7 +17,6 @@ model::model(void){
 	pi = 0.0;
 	h2 = 0.0;
 	pve = 0.0;
-	pve_rb = 0.0;
 	tau = 0.0;
 	var_sy = 0.0;
 	like = 0.0;
@@ -75,7 +64,7 @@ string model::model_str(void){
 
 string model::para_str(void){
 	stringstream s;
-	s << subset.size() << "\t" << h2 << "\t"  << pve << "\t" << pi << "\t" << sigma << "\t" << br2 << "\t" << pve_rb;
+	s << subset.size() << "\t" << h2 << "\t"  << pve << "\t" << pi << "\t" << sigma << "\t" << br2;
 	return s.str();
 }
 
@@ -245,50 +234,69 @@ void model::sample_pi(void){
 	record_time("SamplePI");
 }
 
-double add_weight (int k){
-	double q = g_log_score[k];
-	double lp = log((double) g_n_snp);
-	if (q > g_upper_add * lp ){ q = g_upper_add * lp;}
-	if (q < g_lower_add * lp ){ q = g_lower_add * lp;}
-	return q; 
-}
-
-double del_weight (int k){
-	double q = -g_log_score[k]; 
-	double lp = log((double) g_n_snp);
-	if (q > g_upper_del * lp ){ q = g_upper_del * lp;}
-	if (q < g_lower_del * lp ){ q = g_lower_del * lp;}
-	return q; 
-}
-
 
 double model::add_one_snp(vector<int>& add){
-	vector<int> ids; 
-	vector<double> pp; 	
-	for (int i=0; i<g_n_snp; i++){
-		if (selected[i] == 0){
-			ids.push_back(i);
-			pp.push_back(add_weight(i));
+//	record_time();
+	double r = gsl_rng_uniform(gsl_r);
+	int pick = -1;
+	int pick_rank = -1;
+	if (r < g_prop_uniform){ // uniform
+		pick = gsl_rng_uniform_int(gsl_r, g_n_snp);
+		while (selected[pick] == 1){ pick = gsl_rng_uniform_int(gsl_r, g_n_snp); }
+		pick_rank = g_single_ord[pick];
+		int k = pick_rank;
+		for (int i=0; i<subset.size(); i++){
+			if ( g_single_ord[subset[i]] <= k){ 
+				pick_rank --; 
+			}
+		}		
+	}else{ // geometric  Pr(K = k) = 0.02 * 0.98^k (truncated)
+		double r2 = log(gsl_rng_uniform(gsl_r))/log(1 - g_geometric);
+		int k = (int) r2;
+		while (k >= g_n_snp - subset.size() ){
+			r2 = log(gsl_rng_uniform(gsl_r))/log(1 - g_geometric);
+			k = (int) r2;
 		}
-	}
-	double q_old2new; 
-	int k = log_weighted_sample(pp, q_old2new);
-	int pick = ids[k]; 
+		pick_rank = k;
+		// perhaps we can also save the order of the current SNPs in the model. But I think it won't be more efficient (we need copy).
+		set<int> tmp;
+		int max_k = k + subset.size();
+		for (int i=0; i<subset.size(); i++){
+			int m = g_single_ord[subset[i]];
+			if ( m <= k){ 
+				k ++; 
+				while ( tmp.find(k) != tmp.end() ){
+					k++;
+				}
+			}
+			if ( m > k && m <= max_k ){
+				tmp.insert(m);
+			}
+		}		
+		pick = g_single_id[k];
+	}	
 	selected[pick] = 1;
 	subset.push_back(pick);
 	add.push_back(pick);
 	msize ++;
 	
-	double s = -1e10;
-	double qk = 0;
+	double sum_geom = 1 - pow(1-g_geometric, g_n_snp - subset.size() + 1); 
+	double pa = log(g_prop_uniform) - log(g_n_snp - subset.size() + 1);
+	double pb = log(1-g_prop_uniform) - log(sum_geom) + log(g_geometric) + pick_rank * log(1-g_geometric);
+	double q_new2old = -log(subset.size());
+	double q_old2new = log_sum_log(pa, pb); 
 	
-	for (int j=0; j<subset.size(); j++){
-		double q = del_weight(subset[j]);
-		s = log_sum_log(s, q); 
-		if (j == subset.size() - 1){qk = q;}
-	}
-	double q_new2old = qk - s;
 	return q_new2old - q_old2new;
+}
+
+void gsl_matrix_print (const gsl_matrix* m){
+	for (int i=0; i<m->size1; i++){
+		for (int j=0; j<m->size2; j++){
+			cout << gsl_matrix_get(m, i, j) << "\t";	
+		}	
+		cout << endl;
+	}	
+	return;
 }
 
 double model::add_snps (int add_size, model* last_model){
@@ -322,16 +330,26 @@ double model::add_snps (int add_size, model* last_model){
 
 
 double model::delete_one_snp(vector<int>& del){
-	vector<double> pp; 	
-	for (int j=0; j<subset.size(); j++){
-		pp.push_back(del_weight(subset[j]));
+	int pick_r = gsl_rng_uniform_int(gsl_r, subset.size());
+	int pick = subset[pick_r];			
+	int pick_rank = g_single_ord[pick];
+	int k = pick_rank;
+	for (int i=0; i<subset.size(); i++){
+		if ( g_single_ord[subset[i]] < k){   // skip m == k 
+			pick_rank --; 
+		}
 	}
-	double q_old2new; 
-	int pick_r = log_weighted_sample(pp, q_old2new);
-	int pick = subset[pick_r]; 	
+
 	selected[pick] = 0;
 	subset.erase(subset.begin() + pick_r);
 	msize --;
+
+	double sum_geom = 1 - pow(1-g_geometric, g_n_snp - subset.size() ); 
+	double pa = log(g_prop_uniform) - log(g_n_snp - subset.size());
+	double pb = log(1-g_prop_uniform) - log(sum_geom) + log(g_geometric) + pick_rank * log(1-g_geometric);
+	double q_old2new = -log(subset.size() + 1);
+	double q_new2old = log_sum_log(pa, pb); 
+//	cout << pick << "\t" << sum_geom << "\t" << pa << "\t" << pb << "\t" << q_new2old << "\t" << q_old2new << endl;
 	
 	set<int> tmp;
 	int del_r = pick_r;
@@ -350,17 +368,6 @@ double model::delete_one_snp(vector<int>& del){
 	}	
 	del.push_back(del_r);
 
-
-	double s = -1e10;
-	double qk = 0;
-	for (int i=0; i<g_n_snp; i++){
-		if (selected[i] == 0){
-			double q = add_weight(i);
-			s = log_sum_log(s, q);
-			if (i == pick){ qk = q; }
-		}
-	}
-	double q_new2old = qk - s; 
 	return q_new2old - q_old2new;
 }
 
@@ -441,18 +448,14 @@ void model::sample_tau(void){
 void model::rao_blackwell (void){
 	record_time();
 //	sample_tau();
-	
-	// assuming g_n_cov = 0; need revision later.  
-	double* Beta_rb = allocate1D(g_n_snp);
+
 	double lambda = pi/(1-pi);
 	double ss = h2 /( (1-h2) * sigma * sigma);
 	double* tilde_y = allocate1D(g_n_sub);
 	double* residual = allocate1D(g_n_sub);
 	copy1D(residual, g_pheno, g_n_sub);
-	for (int i=0; i<g_n_sub; i++){ residual[i] -= hatY[i];}	
+	for (int i=0; i<g_n_sub; i++){ residual[i] -= hatY[i];}
 
-	
-	double correct = 0.0; 
 	for (int i=0; i<g_n_snp; i++){
 		double sigma_1, sigma_0;
 		double v = g_snp_var.at(i);
@@ -502,25 +505,17 @@ void model::rao_blackwell (void){
 		double cp = 1.0 / (1.0 + exp(-c));
 		g_rb_pip[i] += cp;
 		g_rb_beta[i] += beta_rb * cp;
-		Beta_rb[i] = beta_rb * cp; 
-		
-		double vxx = 1 / (xx + 1/sigma_1/sigma_1) / tau;
-		double var_beta_rb = cp * (beta_rb * beta_rb + vxx) - cp * cp * beta_rb * beta_rb;
-		correct += var_beta_rb * xx; 
 	}
 	free1D(tilde_y);
 	free1D(residual);
 	g_rb_count ++;
 	
-	// in sst: mean should always be zero
-	double* yhat = allocate1D(g_n_sub);
-	mat_vec_mul(g_data_mat, Beta_rb, g_n_snp, g_n_sub, yhat, 1);
-	pve_rb = (correct + array_sst(yhat, g_n_sub)) / g_yy; 
-	free1D(yhat);		
-	free1D(Beta_rb);
-
 	record_time("RaoBlackwell");
 	return;
 } 
+
+
+
+
 
 
